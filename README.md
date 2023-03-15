@@ -1,6 +1,20 @@
-# Tauri + Svelte + Typescript
+# CN POE Export
+A tool to export CN POE data for POB community, using tauri to write.
 
-This template should help get you started developing with Tauri, Svelte and TypeScript in Vite.
+# Dev
+[setup](https://tauri.app/v1/guides/getting-started/prerequisites) as tauri guides tells.
+
+## Commands
+init:
+```
+npm install
+npm run tauri dev
+```
+
+dev next time:
+```
+npm run tauri dev
+```
 
 ## Recommended IDE Setup
 
