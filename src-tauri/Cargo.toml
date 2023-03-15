@@ -1,8 +1,8 @@
 [package]
 name = "cn-poe-export"
 version = "0.0.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "Export CN POE data for POB community"
+authors = ["cn-poe-community"]
 license = ""
 repository = ""
 edition = "2021"
