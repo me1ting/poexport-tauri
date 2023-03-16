@@ -5,7 +5,7 @@ use chrono::Local;
 use log::LevelFilter;
 use log4rs::{
     append::{console::ConsoleAppender, file::FileAppender},
-    config::{Appender, Logger, Root},
+    config::{Appender, Root},
     encode::pattern::PatternEncoder,
     Config,
 };
@@ -32,7 +32,11 @@ pub fn init(log_dir: &PathBuf) -> Result<()> {
     let config = Config::builder()
         .appender(Appender::builder().build("stdout", Box::new(stdout)))
         .appender(Appender::builder().build("file", Box::new(tofile)))
-        .build(Root::builder().appenders(["file", "stdout"]).build(LevelFilter::Info))?;
+        .build(
+            Root::builder()
+                .appenders(["file", "stdout"])
+                .build(LevelFilter::Info),
+        )?;
 
     log4rs::init_config(config)?;
 
