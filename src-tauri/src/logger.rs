@@ -35,7 +35,7 @@ pub fn init(log_dir: &PathBuf) -> Result<()> {
         .build(
             Root::builder()
                 .appenders(["file", "stdout"])
-                .build(LevelFilter::Info),
+                .build(level),
         )?;
 
     log4rs::init_config(config)?;
