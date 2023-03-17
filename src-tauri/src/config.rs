@@ -1,18 +1,16 @@
-use std::{
-    fs::{self, File},
-    io::{Read, Write},
-    mem,
-    path::Path,
-    sync::RwLock,
-};
+use std::{mem, path::PathBuf};
 
+use crate::utils::paths;
+use anyhow::Result;
 use once_cell::sync::OnceCell;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 
-const BUNDLE_IDENTIFIER: &str = "cn-poe-community";
 const CONFIG_FILE_NAME: &str = "config.json";
 
 const DEFAULT_LISTENING_PORT: u16 = 8655;
+
+static CONFIG_MANAGER: OnceCell<ConfigManager> = OnceCell::new();
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -31,16 +29,6 @@ fn default_listening_port() -> u16 {
     DEFAULT_LISTENING_PORT
 }
 
-impl Config {
-    pub fn new(json: &str) -> Config {
-        serde_json::from_str(json).unwrap()
-    }
-
-    pub fn to_json(&self) -> String {
-        serde_json::to_string_pretty(self).unwrap()
-    }
-}
-
 impl Default for Config {
     fn default() -> Config {
         Config {
@@ -53,100 +41,97 @@ impl Default for Config {
 }
 
 pub struct ConfigManager {
-    config_path: String,
+    config_path: PathBuf,
     lock: RwLock<Config>,
 }
 
 impl ConfigManager {
+    /// The global [ConfigManager]
+    ///
+    /// initilize by `config::init()`, can only be accessed after initialization
     pub fn global() -> &'static ConfigManager {
-        static CONFIG_MANAGER: OnceCell<ConfigManager> = OnceCell::new();
+        CONFIG_MANAGER
+            .get()
+            .expect("config manager is not initialized")
+    }
 
-        CONFIG_MANAGER.get_or_init(|| {
-            let config_path = Self::get_config_path();
-            let config = Self::load_or_default(&config_path);
-
-            ConfigManager {
-                config_path,
-                lock: RwLock::new(config),
+    /// Load config from path, or use default config if some wrongs happen
+    fn load_or_default_config(path: &PathBuf) -> Config {
+        match paths::read_yaml::<Config>(&path) {
+            Ok(config) => config,
+            Err(err) => {
+                log::error!("{:#}", err);
+                log::info!("use default config");
+                let config: Config = Default::default();
+                if let Err(err) = paths::write_yaml(path, &config) {
+                    log::error!("{:#}", err);
+                }
+                config
             }
-        })
-    }
-
-    fn get_config_path() -> String {
-        let home_dir = tauri::api::path::config_dir().unwrap();
-        let config_path = home_dir.join(BUNDLE_IDENTIFIER).join(CONFIG_FILE_NAME);
-        String::from(config_path.as_path().to_str().unwrap())
-    }
-
-    /// Load config from path, or use default config if the file not exist.
-    fn load_or_default(path: &str) -> Config {
-        if let Ok(mut file) = File::open(path) {
-            let mut contents = String::new();
-            file.read_to_string(&mut contents).unwrap();
-            return serde_json::from_str(&contents).unwrap();
-        } else {
-            let config = Default::default();
-            Self::save(path, &config);
-            return config;
         }
     }
 
-    fn save(path_str: &str, config: &Config) {
-        let path = Path::new(path_str);
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent).unwrap();
-        }
-        let mut file = File::create(path).unwrap();
-        file.write_all(config.to_json().as_bytes()).unwrap();
+    pub fn save_config(&self, config: &Config) -> Result<()> {
+        paths::write_yaml(&self.config_path, config)
     }
 
     pub fn get_config(&self) -> Config {
-        self.lock.read().unwrap().clone()
+        self.lock.read().clone()
     }
 
-    pub async fn reset_config(&mut self) {
-        let mut config = self.lock.write().unwrap();
+    pub fn reset_config(&self) -> Result<Config> {
+        let mut config = self.lock.write();
         mem::take(&mut (*config));
-        Self::save(&self.config_path, &config);
+        self.save_config(&config)?;
+        Ok(config.clone())
     }
 
-    pub async fn set_poe_session_id(&mut self, id: &str) {
-        let config = self.lock.read().unwrap();
+    pub fn set_poe_session_id(&self, id: &str) -> Result<()> {
+        let mut config = self.lock.write();
         if config.poe_session_id == id {
-            return;
+            return Ok(());
         }
-        let mut config = self.lock.write().unwrap();
         config.poe_session_id = String::from(id);
-        Self::save(&self.config_path, &config);
+        self.save_config(&config)
     }
 
-    pub async fn set_pob_path(&mut self, path: &str) {
-        let config = self.lock.read().unwrap();
+    pub fn set_pob_path(&self, path: &str) -> Result<()> {
+        let mut config = self.lock.write();
         if config.pob_path == path {
-            return;
+            return Ok(());
         }
-        let mut config = self.lock.write().unwrap();
         config.pob_path = String::from(path);
-        Self::save(&self.config_path, &config);
+        self.save_config(&config)
     }
 
-    pub async fn set_listening_port(&mut self, port: u16) {
-        let config = self.lock.read().unwrap();
+    pub fn set_listening_port(&self, port: u16) -> Result<()> {
+        let mut config = self.lock.write();
         if config.listening_port == port {
-            return;
+            return Ok(());
         }
-        let mut config = self.lock.write().unwrap();
         config.listening_port = port;
-        Self::save(&self.config_path, &config);
+        self.save_config(&config)
     }
 
-    pub async fn set_pob_proxy_supported(&mut self, supported: bool) {
-        let config = self.lock.read().unwrap();
+    pub fn set_pob_proxy_supported(&self, supported: bool) -> Result<()> {
+        let mut config = self.lock.write();
         if config.pob_proxy_supported == supported {
-            return;
+            return Ok(());
         }
-        let mut config = self.lock.write().unwrap();
         config.pob_proxy_supported = supported;
-        Self::save(&self.config_path, &config);
+        self.save_config(&config)
+    }
+}
+
+pub fn init(config_dir: &PathBuf) -> Result<()> {
+    let config_path = config_dir.join(CONFIG_FILE_NAME);
+    let config = ConfigManager::load_or_default_config(&config_path);
+    let manager = ConfigManager {
+        config_path,
+        lock: RwLock::new(config),
+    };
+    match CONFIG_MANAGER.set(manager) {
+        Ok(()) => Ok(()),
+        Err(_) => Err(anyhow::anyhow!("it should never happen")),
     }
 }

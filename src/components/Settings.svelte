@@ -1,21 +1,76 @@
 <script lang="ts">
-    import { getConfig } from "../services/cmds";
+    import { open } from "@tauri-apps/api/dialog";
+    import { notifyError } from "../utils/notify";
+    import {
+        getConfigCmd,
+        resetConfigCmd,
+        setPobPathCmd,
+        setPobProxySupportedCmd,
+        setPoeSessionIdCmd,
+    } from "../services/cmds";
 
     let poeSessionId = "";
     let pobPath = "";
     let pobProxySupported = false;
+
     async function loadConfig() {
-        let config = await getConfig();
-        console.log(config);
+        let config = await getConfigCmd();
         poeSessionId = config.poeSessionId;
         pobPath = config.pobPath;
         pobProxySupported = config.pobProxySupported;
     }
-    function resetConfig() {}
-    function setPoeSessionId() {}
-    function setPobPath() {}
+
+    async function resetConfig() {
+        try {
+            let config = await resetConfigCmd();
+            poeSessionId = config.poeSessionId;
+            pobPath = config.pobPath;
+            pobProxySupported = config.pobProxySupported;
+        } catch (err) {
+            notifyError(err);
+        }
+    }
+
+    async function setPoeSessionId() {
+        try {
+            await setPoeSessionIdCmd(poeSessionId);
+        } catch (err) {
+            notifyError(err);
+        }
+    }
+
+    async function setPobPath() {
+        const selected = await open({
+            directory: true,
+            multiple: false,
+            defaultPath: pobPath,
+        });
+        if (selected !== null && selected !== pobPath) {
+            let path: string;
+            if (Array.isArray(selected)) {
+                path = selected[0];
+            } else {
+                path = selected;
+            }
+
+            try {
+                await setPobPathCmd(path);
+                pobPath = path;
+            } catch (err) {
+                notifyError(err);
+            }
+        }
+    }
+
     function resetPob() {}
-    function switchPobProxySupported() {}
+
+    async function switchPobProxySupported() {
+        try {
+            await setPobProxySupportedCmd(pobProxySupported);
+        } catch (err) {
+            notifyError(err);
+        }
+    }
 
     loadConfig();
 </script>
