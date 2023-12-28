@@ -5,6 +5,7 @@ mod cmds;
 mod config;
 mod logger;
 mod utils;
+mod poe;
 
 fn main() {
     tauri::Builder::default()
