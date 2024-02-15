@@ -1,31 +1,28 @@
 [package]
-name = "cn-poe-export"
-version = "0.0.0"
+name = "poexport"
+version = "1.0.6"
 description = "Export CN POE data for POB community"
-authors = ["cn-poe-community"]
-license = ""
-repository = ""
+authors = ["me1ting"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.2", features = [] }
+tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
 anyhow = "1.0"
 chrono = "0.4"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_info"] }
 log4rs = "1.2.0"
-once_cell = "1.17.1"
+once_cell = "1.19"
 parking_lot = "0.12"
 reqwest = { version = "0.11", features = ["cookies"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
-tauri = { version = "1.2", features = ["dialog", "dialog-open", "shell-open"] }
+tauri = { version = "1.5", features = [ "app-all", "dialog", "dialog-open", "shell-open"] }
 tokio = { version = "1", features = ["full"] }
-tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "dev" }
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

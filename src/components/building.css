@@ -1,0 +1,14 @@
+.exporter-wrapper{
+    margin: 10px;
+    background-color: rgb(240, 240, 240);
+    border-radius: 5px;
+}
+
+.exporter {
+    padding: 20px;
+}
+
+.main-input {
+    min-width: 200px;
+    max-width: 200px;
+}

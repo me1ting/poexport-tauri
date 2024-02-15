@@ -16,7 +16,7 @@ pub fn init(log_dir: &PathBuf) -> Result<()> {
         fs::create_dir_all(&log_dir)?;
     }
 
-    let local_time = Local::now().format("%Y-%m-%d-%H%M").to_string();
+    let local_time = Local::now().format("%Y-%m-%d").to_string();
     let log_file_name = format!("{}.log", local_time);
     let log_file = log_dir.join(log_file_name);
 
@@ -32,11 +32,7 @@ pub fn init(log_dir: &PathBuf) -> Result<()> {
     let config = Config::builder()
         .appender(Appender::builder().build("stdout", Box::new(stdout)))
         .appender(Appender::builder().build("file", Box::new(tofile)))
-        .build(
-            Root::builder()
-                .appenders(["file", "stdout"])
-                .build(level),
-        )?;
+        .build(Root::builder().appenders(["file", "stdout"]).build(level))?;
 
     log4rs::init_config(config)?;
 

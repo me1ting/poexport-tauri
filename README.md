@@ -1,21 +1,10 @@
-# CN POE Export
-A tool to export CN POE data for POB community, using tauri to write.
+# poexport-tauri
 
-# Dev
-[setup](https://tauri.app/v1/guides/getting-started/prerequisites) as tauri guides tells.
+使用tauri重写了wails版本poexport(v1.0.6)，目的是验证基于tauri的可行性。
 
-## Commands
-init:
-```
-npm install
-npm run tauri dev
-```
+相比于wails，tauri给我的体验是：
 
-dev next time:
-```
-npm run tauri dev
-```
-
-## Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
+- api完成度更高，社区更大
+- 依然容易报毒，但比wails报毒更少
+- rust上手难度高于go，因此编写耗费更多的时间
+- 启动白屏时间超过wails
